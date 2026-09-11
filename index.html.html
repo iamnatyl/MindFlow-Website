@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>温故知心 MindFlow — 試用版 v3</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang HK", "Microsoft JhengHei", sans-serif;
+    background: #f5f7fa; color: #2c3e50; line-height: 1.6;
+  }
+  /* ===== Header ===== */
+  header {
+    background: linear-gradient(135deg, #6a8dff 0%, #a78bfa 100%);
+    color: white; padding: 18px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 12px rgba(106,141,255,0.3);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header .tagline { font-size: 11px; opacity: 0.9; }
+  header .user-info {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px;
+  }
+  header .user-info .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+  }
+  /* ===== Nav ===== */
+  nav {
+    display: flex; gap: 4px; padding: 12px 16px;
+    background: white; border-bottom: 1px solid #e8ecf1;
+    overflow-x: auto; position: sticky; top: 62px; z-index: 99;
+  }
+  nav button {
+    padding: 8px 16px; border: none; background: #f0f3f8;
+    border-radius: 20px; font-size: 13px; cursor: pointer;
+    white-space: nowrap; transition: all 0.2s; color: #5a6a7a;
+  }
+  nav button.active {
+    background: linear-gradient(135deg, #6a8dff, #a78bfa);
+    color: white; font-weight: 600;
+  }
+  /* ===== Main ===== */
+  main { max-width: 720px; margin: 0 auto; padding: 20px 16px 80px; }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .card {
+    background: white; border-radius: 16px; padding: 20px;
+    margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .card h2 { font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .icon { font-size: 20px; }
+  textarea, input[type="text"], input[type="number"], select {
+    width: 100%; padding: 12px; border: 2px solid #e8ecf1;
+    border-radius: 12px; font-size: 14px; font-family: inherit;
+    resize: vertical; transition: border 0.2s; background: white;
+  }
+  textarea:focus, input:focus, select:focus { outline: none; border-color: #6a8dff; }
+  .btn {
+    display: inline-block; padding: 10px 20px;
+    background: linear-gradient(135deg, #6a8dff, #a78bfa);
+    color: white; border: none; border-radius: 12px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    margin-top: 10px; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(106,141,255,0.4); }
+  .btn.secondary { background: #f0f3f8; color: #5a6a7a; }
+  .btn.danger { background: linear-gradient(135deg, #f56565, #ed8936); }
+  .btn.full { width: 100%; text-align: center; }
+
+  /* ===== Profile Setup Page ===== */
+  .profile-setup {
+    max-width: 560px; margin: 40px auto; padding: 0 16px;
+  }
+  .profile-setup .hero {
+    text-align: center; margin-bottom: 24px;
+  }
+  .profile-setup .hero .logo {
+    font-size: 48px; margin-bottom: 8px;
+  }
+  .profile-setup .hero h1 {
+    font-size: 24px; color: #4a5568; margin-bottom: 4px;
+  }
+  .profile-setup .hero p {
+    font-size: 13px; color: #718096;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block; font-size: 13px; font-weight: 600;
+    color: #4a5568; margin-bottom: 6px;
+  }
+  .form-group .hint {
+    font-size: 11px; color: #a0aec0; margin-top: 4px;
+  }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .chip {
+    padding: 6px 14px; border-radius: 16px;
+    background: #f0f3f8; font-size: 12px;
+    color: #5a6a7a; cursor: pointer;
+    transition: all 0.2s; border: 2px solid transparent;
+  }
+  .chip:hover { background: #e0e8ff; }
+  .chip.selected {
+    background: linear-gradient(135deg, #6a8dff, #a78bfa);
+    color: white; border-color: transparent;
+  }
+  .progress-bar {
+    height: 4px; background: #e8ecf1; border-radius: 2px;
+    margin-bottom: 20px; overflow: hidden;
+  }
+  .progress-bar .fill {
+    height: 100%; background: linear-gradient(90deg, #6a8dff, #a78bfa);
+    width: 0%; transition: width 0.3s;
+  }
+  .step-indicator {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: #a0aec0; margin-bottom: 8px;
+  }
+
+  /* ===== Flashcards ===== */
+  .flashcard {
+    background: linear-gradient(135deg, #eef2ff, #f5f0ff);
+    border-radius: 12px; padding: 24px; text-align: center;
+    margin: 12px 0; min-height: 120px; display: flex;
+    flex-direction: column; justify-content: center; align-items: center;
+    cursor: pointer; transition: transform 0.2s;
+  }
+  .flashcard:hover { transform: scale(1.01); }
+  .flashcard .question { font-size: 16px; font-weight: 600; color: #4a5568; }
+  .flashcard .answer { font-size: 14px; color: #6a8dff; margin-top: 12px; display: none; }
+  .flashcard.revealed .answer { display: block; animation: fadeIn 0.3s; }
+  .flashcard .hint { font-size: 11px; color: #a0aec0; margin-top: 8px; }
+
+  /* ===== Mood ===== */
+  .mood-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0; }
+  .mood-btn {
+    padding: 12px 4px; border: 2px solid #e8ecf1; border-radius: 12px;
+    background: white; font-size: 24px; cursor: pointer;
+    transition: all 0.2s; text-align: center;
+  }
+  .mood-btn:hover { border-color: #a78bfa; }
+  .mood-btn.selected { border-color: #6a8dff; background: #eef2ff; transform: scale(1.05); }
+
+  /* ===== Habits ===== */
+  .habit-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; border-radius: 12px; background: #f8fafc;
+    margin-bottom: 8px; flex-wrap: wrap;
+  }
+  .habit-item .check {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid #cbd5e0; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px; transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .habit-item .check.done { background: #6a8dff; border-color: #6a8dff; color: white; }
+  .habit-item .label { flex: 1; font-size: 14px; min-width: 120px; }
+  .habit-item .streak { font-size: 12px; color: #a0aec0; }
+  .habit-item .why {
+    width: 100%; font-size: 11px; color: #718096;
+    background: #eef2ff; padding: 6px 10px; border-radius: 8px;
+    margin-top: 4px;
+  }
+  .heatmap { display: flex; gap: 4px; margin-top: 8px; }
+  .heatmap .day {
+    flex: 1; height: 28px; border-radius: 6px;
+    background: #e8ecf1; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 10px; color: #718096;
+  }
+  .heatmap .day.done-1 { background: #c3d0ff; color: #4a5568; }
+  .heatmap .day.done-2 { background: #96aaff; color: white; }
+  .heatmap .day.done-3 { background: #6a8dff; color: white; }
+
+  /* ===== Focus ===== */
+  .focus-timer {
+    text-align: center; padding: 32px 16px;
+    background: linear-gradient(135deg, #eef2ff, #f5f0ff);
+    border-radius: 16px;
+  }
+  .focus-timer .time {
+    font-size: 48px; font-weight: 700; color: #6a8dff;
+    font-variant-numeric: tabular-nums;
+  }
+  .focus-timer .label { font-size: 13px; color: #718096; margin-top: 4px; }
+  .focus-timer .controls { margin-top: 16px; display: flex; gap: 8px; justify-content: center; }
+
+  .energy-row { display: flex; gap: 6px; margin: 10px 0; }
+  .energy-btn {
+    flex: 1; padding: 10px 2px; border: 2px solid #e8ecf1;
+    border-radius: 10px; background: white; cursor: pointer;
+    font-size: 11px; text-align: center; transition: all 0.2s;
+  }
+  .energy-btn:hover { border-color: #a78bfa; }
+  .energy-btn.selected { border-color: #6a8dff; background: #eef2ff; }
+  .energy-btn .emoji { font-size: 18px; display: block; }
+
+  .ai-suggestion-box {
+    background: linear-gradient(135deg, #fff5e6, #ffe8d6);
+    border-left: 4px solid #dd6b20;
+    border-radius: 12px; padding: 14px; margin-top: 12px;
+  }
+  .ai-suggestion-box h3 {
+    font-size: 13px; color: #dd6b20; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ai-suggestion-box p { font-size: 13px; color: #4a5568; }
+  .ai-suggestion-box .recommend {
+    font-weight: 700; color: #dd6b20;
+  }
+
+  /* ===== Community ===== */
+  .community-post {
+    padding: 14px; border-radius: 12px; background: #f8fafc;
+    margin-bottom: 10px; border-left: 3px solid #a78bfa;
+  }
+  .community-post .author { font-size: 12px; font-weight: 600; color: #6a8dff; }
+  .community-post .content { font-size: 13px; color: #4a5568; margin-top: 4px; }
+  .community-post .meta { font-size: 11px; color: #a0aec0; margin-top: 6px; }
+
+  .friend-rec {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; background: #f8fafc;
+    border-radius: 12px; margin-bottom: 8px;
+  }
+  .friend-rec .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #6a8dff, #a78bfa);
+    color: white; display: flex; align-items: center;
+    justify-content: center; font-weight: 700; font-size: 16px;
+    flex-shrink: 0;
+  }
+  .friend-rec .info { flex: 1; }
+  .friend-rec .name { font-size: 13px; font-weight: 600; color: #4a5568; }
+  .friend-rec .subjects { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+  .friend-rec .match {
+    font-size: 11px; font-weight: 600; color: #38a169;
+    background: #f0fff4; padding: 2px 8px; border-radius: 8px;
+  }
+  .friend-rec .add-btn {
+    padding: 6px 12px; border: none; border-radius: 8px;
+    background: linear-gradient(135deg, #6a8dff, #a78bfa);
+    color: white; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+
+  /* ===== Study: upload ===== */
+  .dropzone {
+    border: 2px dashed #c3d0ff; border-radius: 16px;
+    padding: 24px; text-align: center; cursor: pointer;
+    transition: all 0.2s; background: #f8faff;
+  }
+  .dropzone:hover, .dropzone.dragover {
+    border-color: #6a8dff; background: #eef2ff;
+  }
+  .dropzone .dz-icon { font-size: 36px; }
+  .dropzone .dz-title { font-size: 14px; font-weight: 600; margin-top: 6px; color: #5a6a7a; }
+  .dropzone .dz-hint { font-size: 11px; color: #a0aec0; margin-top: 4px; }
+  .file-list { margin-top: 12px; }
+  .file-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; background: #f8fafc;
+    border-radius: 10px; margin-bottom: 6px; font-size: 13px;
+  }
+  .file-item .fi-icon { font-size: 20px; }
+  .file-item .fi-name { flex: 1; color: #4a5568; }
+  .file-item .fi-remove {
+    cursor: pointer; color: #a0aec0; font-size: 16px;
+    background: none; border: none;
+  }
+
+  /* ===== Stats ===== */
+  .stat-row { display: flex; gap: 12px; margin-bottom: 16px; }
+  .stat-box {
+    flex: 1; background: white; border-radius: 12px;
+    padding: 14px; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .stat-box .num { font-size: 22px; font-weight: 700; color: #6a8dff; }
+  .stat-box .lbl { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+
+  /* ===== Badges ===== */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 10px;
+    font-size: 11px; font-weight: 600; background: #eef2ff; color: #6a8dff;
+  }
+  .badge.warm { background: #fff5e6; color: #dd6b20; }
+  .badge.danger { background: #fff5f5; color: #e53e3e; }
+  .badge.success { background: #f0fff4; color: #38a169; }
+
+  /* ===== CBT / warning / exercise ===== */
+  .cbt-step {
+    background: #f8fafc; border-radius: 12px;
+    padding: 14px; margin-bottom: 10px;
+    border-left: 4px solid #6a8dff;
+  }
+  .cbt-step h4 { font-size: 13px; color: #6a8dff; margin-bottom: 6px; }
+  .cbt-step p { font-size: 13px; color: #4a5568; }
+  .cbt-step .row {
+    display: flex; gap: 8px; margin-top: 8px;
+    font-size: 12px; color: #718096;
+  }
+  .cbt-step .row .label { font-weight: 600; color: #5a6a7a; min-width: 70px; }
+
+  .warning-box {
+    background: #fff5f5; border-left: 4px solid #e53e3e;
+    border-radius: 12px; padding: 14px; margin-top: 12px;
+  }
+  .warning-box h3 { font-size: 14px; color: #c53030; margin-bottom: 6px; }
+  .warning-box p { font-size: 12px; color: #742a2a; }
+  .warning-box .hotlines {
+    margin-top: 8px; font-size: 12px; color: #742a2a;
+    background: white; padding: 10px; border-radius: 8px;
+  }
+  .exercise-card {
+    background: linear-gradient(135deg, #f0fff4, #e6fffa);
+    border-radius: 12px; padding: 16px; margin-top: 10px;
+    border-left: 4px solid #38a169;
+  }
+  .exercise-card h3 { font-size: 14px; color: #2f855a; margin-bottom: 6px; }
+  .exercise-card p { font-size: 13px; color: #4a5568; }
+  .exercise-card .time-badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    background: #38a169; color: white; border-radius: 8px; margin-bottom: 6px;
+  }
+
+  /* ===== Loading ===== */
+  .ai-loading {
+    display: none; text-align: center; padding: 16px;
+    color: #6a8dff; font-size: 13px;
+  }
+  .ai-loading.active { display: block; }
+  .ai-loading .dot {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: #6a8dff;
+    margin: 0 2px; animation: bounce 1.2s infinite;
+  }
+  .ai-loading .dot:nth-child(2) { animation-delay: 0.2s; }
+  .ai-loading .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+  .footer-note { text-align: center; font-size: 11px; color: #a0aec0; padding: 20px; }
+
+  /* ===== Profile preview ===== */
+  .profile-preview {
+    background: linear-gradient(135deg, #eef2ff, #f5f0ff);
+    border-radius: 12px; padding: 16px; margin-bottom: 16px;
+  }
+  .profile-preview .row {
+    display: flex; gap: 8px; margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .profile-preview .row .label {
+    font-weight: 600; color: #5a6a7a; min-width: 80px;
+  }
+  .profile-preview .row .value { color: #4a5568; }
+</style>
+</head>
+<body>
+
+<!-- ============ Profile Setup Page ============ -->
+<div id="profileSetupPage" class="profile-setup">
+  <div class="hero">
+    <div class="logo">🧠</div>
+    <h1>温故知心 MindFlow</h1>
+    <p>AI 主動回憶 × 精神健康 × 一站式溫習平台</p>
+  </div>
+
+  <div class="progress-bar">
+    <div class="fill" id="progressFill" style="width: 25%;"></div>
+  </div>
+  <div class="step-indicator">
+    <span id="stepText">步驟 1 / 4：基本資料</span>
+    <span id="stepPercent">25%</span>
+  </div>
+
+  <!-- Step 1: Basic info -->
+  <div class="card" id="step1">
+    <h2><span class="icon">👤</span> 基本資料</h2>
+    <div class="form-group">
+      <label>你的稱呼 *</label>
+      <input type="text" id="userName" placeholder="例如：Natalie" maxlength="20">
+    </div>
+    <div class="form-group">
+      <label>你嘅身份 *</label>
+      <div class="chip-row" id="identityChips">
+        <span class="chip" data-value="中學生">中學生</span>
+        <span class="chip" data-value="大學生">大學生</span>
+        <span class="chip" data-value="在職進修">在職進修</span>
+        <span class="chip" data-value="專業考試考生">專業考試考生</span>
+        <span class="chip" data-value="其他">其他</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>你嘅年齡</label>
+      <select id="userAge">
+        <option value="">請選擇</option>
+        <option value="15-18">15-18 歲</option>
+        <option value="19-22">19-22 歲</option>
+        <option value="23-30">23-30 歲</option>
+        <option value="31-40">31-40 歲</option>
+        <option value="40+">40 歲以上</option>
+      </select>
+    </div>
+    <button class="btn full" onclick="nextStep(2)">下一步 →</button>
+  </div>
+
+  <!-- Step 2: Learning goals -->
+  <div class="card" id="step2" style="display:none;">
+    <h2><span class="icon">🎯</span> 學習目標</h2>
+    <div class="form-group">
+      <label>你正在準備咩考試 / 學習？*（可多選）</label>
+      <div class="chip-row" id="goalChips">
+        <span class="chip" data-value="DSE">DSE</span>
+        <span class="chip" data-value="IELTS">IELTS</span>
+        <span class="chip" data-value="CPA">CPA 會計師</span>
+        <span class="chip" data-value="PCLL">PCLL 法律</span>
+        <span class="chip" data-value="IT認證">IT 認證</span>
+        <span class="chip" data-value="碩士/博士">碩士/博士</span>
+        <span class="chip" data-value="自我增值">自我增值</span>
+        <span class="chip" data-value="其他">其他</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>你每週平均可以溫習幾多時間？</label>
+      <select id="userStudyTime">
+        <option value="少於5小時">少於 5 小時</option>
+        <option value="5-10小時">5-10 小時</option>
+        <option value="10-20小時">10-20 小時</option>
+        <option value="20小時以上">20 小時以上</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn secondary" onclick="nextStep(1)">← 返回</button>
+      <button class="btn" style="flex:1;" onclick="nextStep(3)">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Chronotype + preferences -->
+  <div class="card" id="step3" style="display:none;">
+    <h2><span class="icon">⏰</span> 作息習慣與偏好</h2>
+    <div class="form-group">
+      <label>你嘅作息類型 *</label>
+      <div class="chip-row" id="chronotypeChips">
+        <span class="chip" data-value="early">🌅 早睡早起型（早上最精神）</span>
+        <span class="chip" data-value="neutral">☀️ 中間型（上午至下午）</span>
+        <span class="chip" data-value="late">🌙 晚睡型（夜晚最精神）</span>
+      </div>
+      <p class="hint">AI 會根據你嘅作息類型，喺啱嘅時間建議最合適嘅專注時段。</p>
+    </div>
+    <div class="form-group">
+      <label>你通常幾點起床？</label>
+      <select id="wakeTime">
+        <option value="5">5:00 前</option>
+        <option value="6">6:00-7:00</option>
+        <option value="7">7:00-8:00</option>
+        <option value="8">8:00-9:00</option>
+        <option value="9">9:00-10:00</option>
+        <option value="10">10:00 後</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>你通常幾點睡覺？</label>
+      <select id="sleepTime">
+        <option value="21">21:00 前</option>
+        <option value="22">22:00-23:00</option>
+        <option value="23">23:00-00:00</option>
+        <option value="24">00:00-01:00</option>
+        <option value="1">01:00-02:00</option>
+        <option value="2">02:00 後</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>你偏好邊種情緒舒緩練習？（可多選）</label>
+      <div class="chip-row" id="prefChips">
+        <span class="chip" data-value="relax">🧘 肌肉放鬆</span>
+        <span class="chip" data-value="care">💗 自我關懷</span>
+        <span class="chip" data-value="mindful">🌿 正念呼吸</span>
+        <span class="chip" data-value="gratitude">🙏 感恩練習</span>
+        <span class="chip" data-value="auto">🤖 AI 推薦</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn secondary" onclick="nextStep(2)">← 返回</button>
+      <button class="btn" style="flex:1;" onclick="nextStep(4)">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Confirm -->
+  <div class="card" id="step4" style="display:none;">
+    <h2><span class="icon">✅</span> 確認資料</h2>
+    <div class="profile-preview" id="profilePreview"></div>
+    <p style="font-size:12px;color:#718096;margin-bottom:8px;">
+      AI 將根據以上資料，為你提供個人化嘅記憶卡推薦、情緒練習建議、專注時段建議，以及同科目好友配對。
+    </p>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn secondary" onclick="nextStep(3)">← 返回</button>
+      <button class="btn" style="flex:1;" onclick="finishProfile()">開始使用 🚀</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Main App ============ -->
+<div id="mainApp" style="display:none;">
+  <header>
+    <div>
+      <h1>温故知心 MindFlow</h1>
+      <div class="tagline">AI 主動回憶 × 精神健康 × 一站式溫習平台</div>
+    </div>
+    <div class="user-info">
+      <span id="headerUserName">用戶</span>
+      <div class="avatar" id="headerAvatar">U</div>
+    </div>
+  </header>
+
+  <nav>
+    <button class="active" data-panel="dashboard">🏠 首頁</button>
+    <button data-panel="study">📚 溫習平台</button>
+    <button data-panel="mood">💙 情緒日記</button>
+    <button data-panel="habits">🌱 習慣</button>
+    <button data-panel="focus">⏱️ 專注</button>
+    <button data-panel="community">👥 社群</button>
+  </nav>
+
+  <main>
+    <!-- Dashboard -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stat-row">
+        <div class="stat-box"><div class="num" id="statCards">12</div><div class="lbl">今日溫習卡</div></div>
+        <div class="stat-box"><div class="num" id="statStreak">7</div><div class="lbl">連續打卡天數</div></div>
+        <div class="stat-box"><div class="num" id="statRetention">85%</div><div class="lbl">記憶保留率</div></div>
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">👤</span> 你嘅個人檔案</h2>
+        <div id="dashboardProfile"></div>
+        <button class="btn secondary" onclick="showProfileSetup()">✏️ 修改資料</button>
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">🎯</span> 今日建議</h2>
+        <p style="font-size:14px;color:#5a6a7a;" id="todaySuggestion">載入中...</p>
+        <button class="btn" onclick="switchPanel('study')">開始溫習</button>
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">📊</span> 本週情緒軌跡</h2>
+        <div id="moodTrail"></div>
+      </div>
+    </div>
+
+    <!-- Study -->
+    <div class="panel" id="panel-study">
+      <div class="card">
+        <h2><span class="icon">📄</span> 上載學習材料</h2>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept=".pdf,.txt,.doc,.docx,image/*" multiple hidden>
+          <div class="dz-icon">📄</div>
+          <div class="dz-title">點擊或拖放檔案到此處</div>
+          <div class="dz-hint">支援 PDF、TXT、DOCX、圖片（可多選）</div>
+        </div>
+        <div class="file-list" id="fileList"></div>
+        <p style="font-size:12px;color:#a0aec0;margin-top:12px;">或直接貼上筆記內容：</p>
+        <textarea id="studyInput" rows="3" placeholder="例如：心理學的古典制約理論由 Pavlov 提出..."></textarea>
+        <button class="btn" onclick="generateFlashcards()">✨ 生成記憶卡</button>
+        <div class="ai-loading" id="studyLoading">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <div style="margin-top:6px;">AI 正在分析筆記並生成記憶卡...</div>
+        </div>
+      </div>
+      <div id="flashcardArea"></div>
+    </div>
+
+    <!-- Mood -->
+    <div class="panel" id="panel-mood">
+      <div class="card">
+        <h2><span class="icon">💙</span> 今日情緒日記</h2>
+        <p style="font-size:13px;color:#718096;">今日你的心情如何？</p>
+        <div class="mood-grid" id="moodGrid">
+          <div class="mood-btn" data-mood="😢">😢</div>
+          <div class="mood-btn" data-mood="😟">😟</div>
+          <div class="mood-btn" data-mood="😐">😐</div>
+          <div class="mood-btn" data-mood="🙂">🙂</div>
+          <div class="mood-btn" data-mood="😄">😄</div>
+        </div>
+        <textarea id="moodInput" rows="3" placeholder="寫下今日讓你開心或困擾的一件事..."></textarea>
+        <p style="font-size:12px;color:#a0aec0;margin-top:8px;">你有多少時間做舒緩練習？</p>
+        <div class="chip-row" id="timeChips">
+          <span class="chip" data-time="3">3 分鐘</span>
+          <span class="chip selected" data-time="5">5 分鐘</span>
+          <span class="chip" data-time="10">10 分鐘</span>
+          <span class="chip" data-time="15">15 分鐘</span>
+        </div>
+        <button class="btn" onclick="saveMood()">💾 儲存日記</button>
+      </div>
+
+      <div id="sensitiveWarning"></div>
+
+      <div class="card" id="moodFeedback" style="display:none;">
+        <h2><span class="icon">🤖</span> AI 情緒主動回憶（CBT 三欄法）</h2>
+        <div id="cbtArea"></div>
+        <button class="btn secondary" onclick="generateMoodCard()">生成壓力應對卡</button>
+        <div id="moodCardArea"></div>
+        <div id="exerciseArea"></div>
+      </div>
+    </div>
+
+    <!-- Habits -->
+    <div class="panel" id="panel-habits">
+      <div class="card">
+        <h2><span class="icon">🌱</span> 今日微習慣</h2>
+        <div id="habitList"></div>
+        <button class="btn" onclick="addHabit(this)">+ 新增微習慣</button>
+      </div>
+      <div class="card">
+        <h2><span class="icon">📈</span> 習慣熱力圖（過去 7 天）</h2>
+        <div id="heatmapArea"></div>
+      </div>
+      <div class="card">
+        <h2><span class="icon">🤖</span> AI 習慣分析與調節</h2>
+        <div id="habitAiArea"></div>
+      </div>
+    </div>
+
+    <!-- Focus -->
+    <div class="panel" id="panel-focus">
+      <div class="card">
+        <h2><span class="icon">🤖</span> AI 精力建議</h2>
+        <div class="ai-suggestion-box" id="energySuggestion">
+          <h3>⏰ 根據你嘅作息與當下時間</h3>
+          <p>載入中...</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">⚡</span> 你今日嘅精力如何？（可手動調整）</h2>
+        <div class="energy-row" id="energyRow">
+          <div class="energy-btn" data-energy="1"><span class="emoji">😴</span>疲倦</div>
+          <div class="energy-btn" data-energy="2"><span class="emoji">😐</span>一般</div>
+          <div class="energy-btn selected" data-energy="3"><span class="emoji">🙂</span>正常</div>
+          <div class="energy-btn" data-energy="4"><span class="emoji">😊</span>不錯</div>
+          <div class="energy-btn" data-energy="5"><span class="emoji">🔥</span>充沛</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">⏱️</span> 智能專注計時</h2>
+        <div class="focus-timer">
+          <div class="time" id="focusTime">25:00</div>
+          <div class="label" id="focusLabel">專注時段</div>
+          <div class="controls">
+            <button class="btn" id="focusStartBtn" onclick="startFocus()">▶ 開始</button>
+            <button class="btn secondary" onclick="resetFocus()">↺ 重設</button>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#a0aec0;margin-top:12px;text-align:center;" id="focusSuggestion"></p>
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">🌲</span> 共學專注室</h2>
+        <p style="font-size:13px;color:#5a6a7a;">目前有 <strong>3 位朋友</strong>與你一同專注中：</p>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <span class="badge">👤 小明 · 專注中</span>
+          <span class="badge">👤 阿欣 · 專注中</span>
+          <span class="badge">👤 Kelvin · 休息中</span>
+        </div>
+        <button class="btn secondary" onclick="alert('已加入共學專注室！')">加入共學</button>
+      </div>
+    </div>
+
+    <!-- Community -->
+    <div class="panel" id="panel-community">
+      <div class="card">
+        <h2><span class="icon">🤖</span> AI 推薦好友</h2>
+        <p style="font-size:12px;color:#718096;margin-bottom:8px;">
+          根據你嘅個人檔案（<span id="communityProfileLabel">科目</span>），AI 為你配對同路人：
+        </p>
+        <div id="friendRecArea"></div>
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">👥</span> 心友動態</h2>
+        <div class="community-post">
+          <div class="author">小明 · DSE 考生</div>
+          <div class="content">今日完成咗 30 張記憶卡！仲喺共學專注室同阿欣一齊溫咗 2 個鐘，好有動力 💪</div>
+          <div class="meta">❤️ 12 · 💬 3 · 2小時前</div>
+        </div>
+        <div class="community-post">
+          <div class="author">阿欣 · 會計師考生</div>
+          <div class="content">想問下有冇人一齊溫 CPA？我開咗個溫習小組，大家可以共享記憶卡～</div>
+          <div class="meta">❤️ 8 · 💬 5 · 5小時前</div>
+        </div>
+        <div class="community-post">
+          <div class="author">Kelvin · 在職進修</div>
+          <div class="content">今日情緒日記寫咗工作壓力，AI 生成咗張應對卡提醒我深呼吸。好實用 🙏</div>
+          <div class="meta">❤️ 15 · 💬 2 · 1日前</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">💬</span> 匿名樹洞</h2>
+        <textarea rows="3" placeholder="在這裡匿名分享你的心情..."></textarea>
+        <button class="btn" onclick="alert('已匿名發佈！')">匿名發佈</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="footer-note">温故知心 MindFlow · 試用版 v3 · 2026</div>
+</div>
+
+<script>
+/* =========================================================
+   PROFILE SETUP
+   ========================================================= */
+const profile = {
+  name: '',
+  identity: '',
+  age: '',
+  goals: [],
+  studyTime: '',
+  chronotype: '',
+  wakeTime: '',
+  sleepTime: '',
+  preferences: []
+};
+
+let currentStep = 1;
+
+// Chip selection helper
+function setupChips(containerId, key, multi = false) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      if (multi) {
+        chip.classList.toggle('selected');
+        const val = chip.dataset.value;
+        const idx = profile[key].indexOf(val);
+        if (idx > -1) profile[key].splice(idx, 1);
+        else profile[key].push(val);
+      } else {
+        container.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        profile[key] = chip.dataset.value;
+      }
+    });
+  });
+}
+
+setupChips('identityChips', 'identity', false);
+setupChips('goalChips', 'goals', true);
+setupChips('chronotypeChips', 'chronotype', false);
+setupChips('prefChips', 'preferences', true);
+
+function nextStep(step) {
+  // Validate
+  if (step > currentStep) {
+    if (currentStep === 1) {
+      const name = document.getElementById('userName').value.trim();
+      if (!name) { alert('請填寫你嘅稱呼！'); return; }
+      if (!profile.identity) { alert('請選擇你嘅身份！'); return; }
+      profile.name = name;
+      profile.age = document.getElementById('userAge').value;
+    }
+    if (currentStep === 2) {
+      if (profile.goals.length === 0) { alert('請至少選擇一個學習目標！'); return; }
+      profile.studyTime = document.getElementById('userStudyTime').value;
+    }
+    if (currentStep === 3) {
+      if (!profile.chronotype) { alert('請選擇你嘅作息類型！'); return; }
+      profile.wakeTime = document.getElementById('wakeTime').value;
+      profile.sleepTime = document.getElementById('sleepTime').value;
+      if (profile.preferences.length === 0) profile.preferences = ['auto'];
+    }
+  }
+
+  document.getElementById('step' + currentStep).style.display = 'none';
+  currentStep = step;
+  document.getElementById('step' + currentStep).style.display = 'block';
+
+  // Update progress
+  const percent = (step / 4) * 100;
+  document.getElementById('progressFill').style.width = percent + '%';
+  document.getElementById('stepPercent').textContent = Math.round(percent) + '%';
+  const stepNames = ['基本資料', '學習目標', '作息習慣與偏好', '確認資料'];
+  document.getElementById('stepText').textContent = `步驟 ${step} / 4：${stepNames[step-1]}`;
+
+  // Render preview on step 4
+  if (step === 4) renderProfilePreview();
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderProfilePreview() {
+  const chronoLabel = {
+    early: '🌅 早睡早起型',
+    neutral: '☀️ 中間型',
+    late: '🌙 晚睡型'
+  }[profile.chronotype] || '未選擇';
+
+  const prefLabels = {
+    relax: '🧘 肌肉放鬆',
+    care: '💗 自我關懷',
+    mindful: '🌿 正念呼吸',
+    gratitude: '🙏 感恩練習',
+    auto: '🤖 AI 推薦'
+  };
+
+  const prefs = profile.preferences.map(p => prefLabels[p]).join('、');
+
+  document.getElementById('profilePreview').innerHTML = `
+    <div class="row"><span class="label">稱呼：</span><span class="value">${profile.name}</span></div>
+    <div class="row"><span class="label">身份：</span><span class="value">${profile.identity}</span></div>
+    <div class="row"><span class="label">年齡：</span><span class="value">${profile.age || '未填寫'}</span></div>
+    <div class="row"><span class="label">學習目標：</span><span class="value">${profile.goals.join('、')}</span></div>
+    <div class="row"><span class="label">每週溫習：</span><span class="value">${profile.studyTime}</span></div>
+    <div class="row"><span class="label">作息類型：</span><span class="value">${chronoLabel}</span></div>
+    <div class="row"><span class="label">起床 / 睡覺：</span><span class="value">${profile.wakeTime}:00 / ${profile.sleepTime}:00</span></div>
+    <div class="row"><span class="label">偏好練習：</span><span class="value">${prefs}</span></div>
+  `;
+}
+
+function finishProfile() {
+  document.getElementById('profileSetupPage').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+
+  // Update header
+  document.getElementById('headerUserName').textContent = profile.name;
+  document.getElementById('headerAvatar').textContent = profile.name[0].toUpperCase();
+
+  // Update dashboard profile
+  renderDashboardProfile();
+
+  // Init all
+  renderHabits();
+  renderFriendRecs();
+  renderMoodTrail();
+  updateEnergySuggestion();
+  updateTodaySuggestion();
+}
+
+function showProfileSetup() {
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('profileSetupPage').style.display = 'block';
+  // Go to step 1
+  document.querySelectorAll('#profileSetupPage .card').forEach(c => c.style.display = 'none');
+  document.getElementById('step1').style.display = 'block';
+  currentStep = 1;
+  document.getElementById('progressFill').style.width = '25%';
+  document.getElementById('stepPercent').textContent = '25%';
+  document.getElementById('stepText').textContent = '步驟 1 / 4：基本資料';
+  // Repopulate
+  document.getElementById('userName').value = profile.name;
+  document.querySelectorAll('#identityChips .chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.value === profile.identity);
+  });
+}
+
+function renderDashboardProfile() {
+  const chronoLabel = {
+    early: '🌅 早睡早起型',
+    neutral: '☀️ 中間型',
+    late: '🌙 晚睡型'
+  }[profile.chronotype] || '未選擇';
+
+  document.getElementById('dashboardProfile').innerHTML = `
+    <div class="profile-preview">
+      <div class="row"><span class="label">👤 身份：</span><span class="value">${profile.identity}</span></div>
+      <div class="row"><span class="label">🎯 目標：</span><span class="value">${profile.goals.join('、')}</span></div>
+      <div class="row"><span class="label">⏰ 作息：</span><span class="value">${chronoLabel}</span></div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+  });
+});
+
+function switchPanel(name) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`nav button[data-panel="${name}"]`).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* =========================================================
+   DASHBOARD — TODAY SUGGESTION
+   ========================================================= */
+function updateTodaySuggestion() {
+  const hour = new Date().getHours();
+  const chrono = profile.chronotype;
+  let suggestion = '';
+
+  if (chrono === 'early') {
+    if (hour < 12) suggestion = `而家係你嘅黃金時段！建議先溫習 <strong>15 張記憶卡</strong>，再進行 25 分鐘專注時段。`;
+    else if (hour < 18) suggestion = `下晝精神開始回落，建議做 <strong>10 張記憶卡</strong> 配合 5 分鐘正念呼吸。`;
+    else suggestion = `夜晚建議輕鬆回顧今日所學，做 <strong>5 張記憶卡</strong> 並寫情緒日記。`;
+  } else if (chrono === 'late') {
+    if (hour < 12) suggestion = `早上精神未完全啟動，建議先寫情緒日記，再用 <strong>15 分鐘</strong> 做輕量溫習。`;
+    else if (hour < 18) suggestion = `下晝開始進入狀態，建議用 <strong>20 分鐘</strong> 專注時段。`;
+    else suggestion = `而家係你嘅黃金時段！建議進行 <strong>25-45 分鐘</strong> 深度專注，完成 20 張記憶卡。`;
+  } else {
+    suggestion = `根據你嘅作息，今日建議：溫習 <strong>15 張記憶卡</strong>，並喺精神最好嘅時段進行 25 分鐘專注。`;
+  }
+  document.getElementById('todaySuggestion').innerHTML = suggestion;
+}
+
+function renderMoodTrail() {
+  const data = [
+    { day: '週一', value: 70, emoji: '😊' },
+    { day: '週二', value: 50, emoji: '😐' },
+    { day: '週三', value: 85, emoji: '😄' },
+    { day: '週四', value: 35, emoji: '😟' },
+    { day: '週五', value: 65, emoji: '🙂' }
+  ];
+  document.getElementById('moodTrail').innerHTML = data.map(d => `
+    <div class="report-bar" style="display:flex;align-items:center;gap:8px;margin:8px 0;font-size:12px;">
+      <span style="width:40px;">${d.day}</span>
+      <div style="flex:1;height:8px;border-radius:4px;background:#e8ecf1;overflow:hidden;">
+        <div style="height:100%;border-radius:4px;background:linear-gradient(90deg,#6a8dff,#a78bfa);width:${d.value}%;"></div>
+      </div>
+      <span>${d.emoji}</span>
+    </div>
+  `).join('');
+}
+
+/* =========================================================
+   STUDY: File upload
+   ========================================================= */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+let uploadedFiles = [];
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+function handleFiles(files) {
+  for (const f of files) uploadedFiles.push(f);
+  renderFileList();
+}
+
+function renderFileList() {
+  fileList.innerHTML = uploadedFiles.map((f, i) => `
+    <div class="file-item">
+      <span class="fi-icon">${getFileIcon(f.name)}</span>
+      <span class="fi-name">${f.name} <span style="color:#a0aec0;font-size:11px;">(${(f.size/1024).toFixed(1)} KB)</span></span>
+      <button class="fi-remove" onclick="removeFile(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (ext === 'pdf') return '📕';
+  if (ext === 'txt') return '📄';
+  if (['doc','docx'].includes(ext)) return '📘';
+  if (['png','jpg','jpeg','gif','webp'].includes(ext)) return '🖼️';
+  return '📎';
+}
+
+function removeFile(i) {
+  uploadedFiles.splice(i, 1);
+  renderFileList();
+}
+
+/* =========================================================
+   STUDY: Flashcards
+   ========================================================= */
+function generateFlashcards() {
+  const input = document.getElementById('studyInput').value.trim();
+  if (!input && uploadedFiles.length === 0) {
+    alert('請先上載檔案或貼上筆記內容！');
+    return;
+  }
+  const loading = document.getElementById('studyLoading');
+  loading.classList.add('active');
+  document.getElementById('flashcardArea').innerHTML = '';
+
+  setTimeout(() => {
+    loading.classList.remove('active');
+    let cards = [];
+    const text = input || (uploadedFiles[0] ? uploadedFiles[0].name : '');
+
+    if (text.includes('會計') || text.includes('CPA') || text.includes('資產')) {
+      cards = [
+        { q: '什麼是資產負債表 (Balance Sheet) 的核心等式？', a: '資產 = 負債 + 所有者權益' },
+        { q: '應收帳款 (Accounts Receivable) 屬於哪類資產？', a: '流動資產 (Current Assets)' },
+        { q: '什麼是折舊 (Depreciation)？', a: '固定資產因使用或時間而價值下降的會計處理' }
+      ];
+    } else if (text.includes('古典制約') || text.includes('Pavlov')) {
+      cards = [
+        { q: '古典制約理論由誰提出？', a: 'Pavlov（巴甫洛夫）' },
+        { q: '古典制約涉及哪四個要素？', a: '非制約刺激、非制約反應、制約刺激、制約反應' },
+        { q: '古典制約的經典例子是？', a: '狗聽見鈴聲便分泌唾液' }
+      ];
+    } else {
+      const snippet = text.substring(0, 20) || '你嘅筆記';
+      cards = [
+        { q: `關於「${snippet}...」的核心概念是什麼？`, a: '請參考你上載嘅筆記內容。' },
+        { q: '此筆記中的重點關鍵字為何？', a: '建議先閱讀原文，再嘗試自己歸納。' },
+        { q: '你可以如何將此知識應用到考試？', a: '嘗試用自己的說話解釋一次，再對照筆記。' }
+      ];
+    }
+
+    let html = '<div class="card"><h2><span class="icon">🃏</span> AI 生成記憶卡（點擊卡片查看答案）</h2>';
+    cards.forEach((c, i) => {
+      html += `<div class="flashcard" onclick="this.classList.toggle('revealed')">
+        <div class="question">Q${i+1}. ${c.q}</div>
+        <div class="answer">✅ ${c.a}</div>
+        <div class="hint">點擊卡片顯示答案</div>
+      </div>`;
+    });
+    html += '</div>';
+    document.getElementById('flashcardArea').innerHTML = html;
+  }, 1200);
+}
+
+/* =========================================================
+   MOOD
+   ========================================================= */
+let selectedMood = null;
+let selectedTime = 5;
+
+document.querySelectorAll('.mood-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedMood = btn.dataset.mood;
+  });
+});
+
+document.querySelectorAll('#timeChips .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#timeChips .chip').forEach(x => x.classList.remove('selected'));
+    c.classList.add('selected');
+    selectedTime = parseInt(c.dataset.time);
+  });
+});
+
+const sensitiveWords = ['自殺','自殘','不想活','想死','死了算','割手','跳樓','結束生命','消失','傷害自己','冇希望','無希望','冇人愛','冇用','廢','廢柴'];
+
+function detectSensitive(text) {
+  return sensitiveWords.filter(w => text.includes(w));
+}
+
+function saveMood() {
+  const text = document.getElementById('moodInput').value.trim();
+  if (!selectedMood || !text) { alert('請選擇心情並填寫日記！'); return; }
+
+  const found = detectSensitive(text);
+  const warningArea = document.getElementById('sensitiveWarning');
+  if (found.length > 0) {
+    warningArea.innerHTML = `
+      <div class="warning-box">
+        <h3>⚠️ 我們關心你</h3>
+        <p>你嘅日記中出現咗一啲令人擔心嘅字眼。你唔需要一個人面對，以下資源可以幫到你：</p>
+        <div class="hotlines">
+          <strong>24 小時求助熱線：</strong><br>
+          • 撒瑪利亞防止自殺會：2389 2222<br>
+          • 生命熱線：2382 0000<br>
+          • 醫院管理局精神健康專線：2466 7350<br>
+          • 社會福利署熱線：2343 2255
+        </div>
+      </div>`;
+  } else {
+    warningArea.innerHTML = '';
+  }
+
+  document.getElementById('moodFeedback').style.display = 'block';
+  renderCBT(text, selectedMood);
+  suggestExercise(selectedMood, selectedTime);
+}
+
+function renderCBT(text, mood) {
+  const snippet = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+  const isNegative = ['😢','😟','😐'].includes(mood);
+
+  const cbtHTML = `
+    <p style="font-size:12px;color:#718096;margin-bottom:10px;">根據你嘅日記：「${snippet}」</p>
+    <div class="cbt-step">
+      <h4>🔍 第一步：偵測問題三招（拆解負面自動化思想）</h4>
+      <div class="row"><span class="label">1. 有冇搞錯？</span><span>未必好似你想像咁差，試下搵證據支持同反對你嘅想法。</span></div>
+      <div class="row"><span class="label">2. 有冇咁嚴重？</span><span>就算真係發生，後果可能比你想像中輕微。</span></div>
+      <div class="row"><span class="label">3. 其他新思維</span><span>如果係你朋友遇到同一件事，你會點同佢講？</span></div>
+    </div>
+    <div class="cbt-step">
+      <h4>🎯 第二步：相反行為（行為實驗）</h4>
+      <p>${isNegative
+        ? '你嘅情緒化行為可能係：避開眼神、唔想出聲、想縮埋一角。相反行為可以是：<strong>抬起頭、望住對方、慢慢深呼吸</strong>。'
+        : '你今日嘅狀態不錯！可以試下將呢份能量延伸：主動同朋友分享你嘅學習成果，或者幫助一位同學。'}
+      </p>
+    </div>
+    <div class="cbt-step">
+      <h4>📝 第三步：實驗後檢討（反思）</h4>
+      <div class="row"><span class="label">相反行為</span><span>你成功進行相反行為嗎？（0-10 分）</span></div>
+      <div class="row"><span class="label">靈活思維</span><span>你成功保持靈活思維嗎？（0-10 分）</span></div>
+      <div class="row"><span class="label">覺察</span><span>集中「現狀」/ 接納 / 不衝動</span></div>
+    </div>`;
+  document.getElementById('cbtArea').innerHTML = cbtHTML;
+}
+
+const exercises = {
+  relax: { name: '漸進式肌肉放鬆練習', desc: '由拳頭開始，逐組肌肉繃緊 5 秒，然後放鬆 10 秒。順序：拳頭 → 手臂 → 肩膀 → 面部 → 大腿 → 小腿。', icon: '🧘' },
+  care: { name: '自我關懷練習', desc: '將手放在心口，深呼吸三次，然後對自己講：「我已經盡力，我值得被溫柔對待。」寫下三件今日做得好嘅小事。', icon: '💗' },
+  mindful: { name: '正念呼吸練習', desc: '閉上眼，專注感受空氣由鼻入、由口出。每次分心，溫柔咁將注意力帶返呼吸。', icon: '🌿' },
+  gratitude: { name: '感恩練習', desc: '寫下三件今日令你感恩嘅事，可以係好小事（例如：飲到一杯好飲嘅奶茶）。', icon: '🙏' }
+};
+
+function suggestExercise(mood, time) {
+  // Determine preference from profile
+  let pref = 'auto';
+  if (profile.preferences.length > 0 && !profile.preferences.includes('auto')) {
+    pref = profile.preferences[0];
+  }
+
+  let chosen;
+  if (pref !== 'auto' && exercises[pref]) {
+    chosen = exercises[pref];
+  } else {
+    if (mood === '😢' || mood === '😟') {
+      chosen = time >= 10 ? exercises.relax : exercises.mindful;
+    } else if (mood === '😐') {
+      chosen = time >= 10 ? exercises.care : exercises.mindful;
+    } else {
+      chosen = exercises.gratitude;
+    }
+  }
+
+  document.getElementById('exerciseArea').innerHTML = `
+    <div class="exercise-card">
+      <span class="time-badge">${time} 分鐘 · ${chosen.icon} ${chosen.name}</span>
+      <h3>${chosen.icon} ${chosen.name}</h3>
+      <p>${chosen.desc}</p>
+      <p style="margin-top:8px;font-size:11px;color:#718096;">💡 AI 根據你嘅心情、可用時間同個人偏好（${profile.preferences.join('、')}）推薦此練習。</p>
+    </div>`;
+}
+
+function generateMoodCard() {
+  document.getElementById('moodCardArea').innerHTML = `
+    <div class="flashcard revealed" style="cursor:default;">
+      <div class="question">壓力情境：學業／工作壓力大，感到時間不足</div>
+      <div class="answer">✅ 應對方法：1) 將任務拆成 15 分鐘小段；2) 使用共學專注室與朋友一同專注；3) 完成後給自己 3 分鐘呼吸練習作為獎勵。</div>
+    </div>`;
+}
+
+/* =========================================================
+   HABITS
+   ========================================================= */
+const habitData = [
+  { label: '溫習 15 分鐘', streak: 7, done: false, why: '🧠 每日小量溫習能啟動「間隔重複效應」，記憶保留率提升 40%。', history: [1,1,1,0,1,1,1] },
+  { label: '飲一杯水', streak: 12, done: true, why: '💧 大腦 75% 是水，脫水會直接影響專注力與情緒穩定。', history: [1,1,1,1,1,1,1] },
+  { label: '3 分鐘呼吸練習', streak: 3, done: false, why: '🌿 3 分鐘深呼吸能降低皮質醇（壓力荷爾蒙）水平，穩定情緒。', history: [0,1,0,1,0,1,0] },
+  { label: '睡前不看手機 30 分鐘', streak: 5, done: false, why: '😴 藍光抑制褪黑激素分泌，影響睡眠質素與翌日專注力。', history: [1,1,0,1,1,0,1] }
+];
+
+function renderHabits() {
+  const list = document.getElementById('habitList');
+  list.innerHTML = habitData.map((h, i) => `
+    <div class="habit-item">
+      <div class="check ${h.done ? 'done' : ''}" onclick="toggleHabit(${i})">✓</div>
+      <div class="label">${h.label}</div>
+      <div class="streak">🔥 ${h.streak}天</div>
+      <div class="why">${h.why}</div>
+    </div>
+  `).join('');
+  renderHeatmap();
+  renderHabitAI();
+}
+
+function toggleHabit(i) {
+  habitData[i].done = !habitData[i].done;
+  if (habitData[i].done) habitData[i].streak++;
+  renderHabits();
+}
+
+function addHabit(btnEl) {
+  const label = prompt('新增微習慣：');
+  if (!label) return;
+  habitData.push({
+    label, streak: 0, done: false,
+    why: '🌱 這是你自訂的習慣。持續 21 天後，它會成為你生活的一部分。',
+    history: [0,0,0,0,0,0,0]
+  });
+  renderHabits();
+}
+
+function renderHeatmap() {
+  const area = document.getElementById('heatmapArea');
+  const dayNames = ['一','二','三','四','五','六','日'];
+  area.innerHTML = habitData.map(h => `
+    <div style="margin-bottom:10px;">
+      <div style="font-size:12px;color:#5a6a7a;margin-bottom:4px;">${h.label}</div>
+      <div class="heatmap">
+        ${h.history.map((v, i) => {
+          const cls = v === 0 ? '' : v === 1 ? 'done-1' : v === 2 ? 'done-2' : 'done-3';
+          return `<div class="day ${cls}">${dayNames[i]}</div>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHabitAI() {
+  const area = document.getElementById('habitAiArea');
+  let totalSlots = 0, doneSlots = 0;
+  habitData.forEach(h => {
+    h.history.forEach(v => { totalSlots++; if (v > 0) doneSlots++; });
+  });
+  const rate = Math.round((doneSlots / totalSlots) * 100);
+
+  let advice = '';
+  const chrono = profile.chronotype;
+  const chronoNote = chrono === 'early'
+    ? '你係早睡早起型，建議將最需要專注嘅習慣安排喺朝早。'
+    : chrono === 'late'
+    ? '你係晚睡型，建議將最需要專注嘅習慣安排喺夜晚。'
+    : '你係中間型，建議將最需要專注嘅習慣安排喺上午至下午。';
+
+  if (rate >= 80) {
+    advice = `🌟 你嘅習慣達成率高達 <strong>${rate}%</strong>！AI 建議你可以嘗試將「溫習 15 分鐘」延長至 <strong>20 分鐘</strong>。${chronoNote}`;
+  } else if (rate >= 50) {
+    advice = `👍 你嘅習慣達成率為 <strong>${rate}%</strong>，表現穩定。AI 建議你維持現有節奏，並可嘗試加入一個新嘅小習慣。${chronoNote}`;
+  } else {
+    advice = `💪 你嘅習慣達成率為 <strong>${rate}%</strong>。AI 建議你將現有習慣拆得更細，例如將「溫習 15 分鐘」改為「溫習 5 分鐘」。${chronoNote}`;
+  }
+
+  area.innerHTML = `<p style="font-size:13px;color:#5a6a7a;">${advice}</p>`;
+}
+
+/* =========================================================
+   FOCUS — with chronotype + current time logic
+   ========================================================= */
+let focusInterval = null;
+let focusSeconds = 25 * 60;
+let currentEnergy = 3;
+
+const energyConfig = {
+  1: { focus: 15, break: 5, label: '疲倦模式：短時專注，多休息' },
+  2: { focus: 20, break: 5, label: '一般模式：均衡節奏' },
+  3: { focus: 25, break: 5, label: '正常模式：標準番茄鐘' },
+  4: { focus: 30, break: 5, label: '不錯模式：延長專注' },
+  5: { focus: 45, break: 10, label: '充沛模式：深度工作' }
+};
+
+/**
+ * AI energy suggestion based on:
+ * - chronotype (early / neutral / late)
+ * - current time of day
+ * - wake time / sleep time
+ */
+function computeEnergyFromChronotype() {
+  const now = new Date();
+  const hour = now.getHours() + now.getMinutes() / 60;
+
+  const wakeHour = parseInt(profile.wakeTime) || 7;
+  const sleepHour = parseInt(profile.sleepTime) || 23;
+
+  // Hours awake
+  const hoursAwake = hour - wakeHour;
+
+  // Peak time ranges
+  let peakStart, peakEnd;
+  if (profile.chronotype === 'early') {
+    peakStart = wakeHour + 1;
+    peakEnd = wakeHour + 5;
+  } else if (profile.chronotype === 'late') {
+    peakStart = sleepHour - 6;
+    peakEnd = sleepHour - 1;
+  } else {
+    peakStart = wakeHour + 3;
+    peakEnd = wakeHour + 8;
+  }
+
+  // Determine energy level
+  let energy, reason;
+
+  if (hour < wakeHour) {
+    energy = 1;
+    reason = '而家係你平時嘅睡眠時間，如果你要熬夜，建議做短時專注（15 分鐘），並多休息。';
+  } else if (hour >= peakStart && hour < peakEnd) {
+    energy = 5;
+    reason = `而家係你嘅黃金時段（${Math.floor(peakStart)}:00 - ${Math.floor(peakEnd)}:00），精神最充沛，適合深度工作！`;
+  } else if (hour >= wakeHour && hour < peakStart) {
+    energy = 3;
+    reason = '你剛剛起床，精神正在慢慢提升。建議先做輕量溫習，再進入專注。';
+  } else if (hour >= peakEnd && hour < sleepHour - 2) {
+    energy = 3;
+    reason = '過咗黃金時段，精神開始回落。建議用 25 分鐘標準番茄鐘。';
+  } else if (hour >= sleepHour - 2) {
+    energy = 1;
+    reason = '接近你平時嘅睡眠時間，建議做輕度回顧或放鬆練習，唔好強迫自己。';
+  } else {
+    energy = 3;
+    reason = '';
+  }
+
+  return { energy, reason, peakStart, peakEnd, hoursAwake };
+}
+
+function updateEnergySuggestion() {
+  const { energy, reason, peakStart, peakEnd } = computeEnergyFromChronotype();
+  currentEnergy = energy;
+
+  const chronoLabel = {
+    early: '🌅 早睡早起型',
+    neutral: '☀️ 中間型',
+    late: '🌙 晚睡型'
+  }[profile.chronotype] || '未設定';
+
+  const energyLabel = {
+    1: '😴 疲倦',
+    2: '😐 一般',
+    3: '🙂 正常',
+    4: '😊 不錯',
+    5: '🔥 充沛'
+  }[energy];
+
+  const box = document.getElementById('energySuggestion');
+  box.innerHTML = `
+    <h3>⏰ AI 根據你嘅作息與當下時間</h3>
+    <p><strong>你嘅作息類型：</strong>${chronoLabel}</p>
+    <p><strong>黃金時段：</strong>${Math.floor(peakStart)}:00 - ${Math.floor(peakEnd)}:00</p>
+    <p><strong>現在建議精力：</strong><span class="recommend">${energyLabel}</span></p>
+    <p style="margin-top:6px;">${reason}</p>
+  `;
+
+  // Update energy buttons
+  document.querySelectorAll('.energy-btn').forEach(btn => {
+    btn.classList.toggle('selected', parseInt(btn.dataset.energy) === energy);
+  });
+
+  applyEnergy();
+}
+
+document.querySelectorAll('.energy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    currentEnergy = parseInt(btn.dataset.energy);
+    applyEnergy();
+  });
+});
+
+function applyEnergy() {
+  const cfg = energyConfig[currentEnergy];
+  focusSeconds = cfg.focus * 60;
+  updateFocusDisplay();
+  document.getElementById('focusSuggestion').textContent =
+    `AI 根據你嘅精力，建議 ${cfg.focus} 分鐘專注 + ${cfg.break} 分鐘休息（${cfg.label}）`;
+}
+
+function updateFocusDisplay() {
+  const m = String(Math.floor(focusSeconds / 60)).padStart(2, '0');
+  const s = String(focusSeconds % 60).padStart(2, '0');
+  document.getElementById('focusTime').textContent = `${m}:${s}`;
+}
+
+function startFocus() {
+  const btn = document.getElementById('focusStartBtn');
+  if (focusInterval) {
+    clearInterval(focusInterval);
+    focusInterval = null;
+    btn.textContent = '▶ 繼續';
+    return;
+  }
+  btn.textContent = '⏸ 暫停';
+  focusInterval = setInterval(() => {
+    if (focusSeconds <= 0) {
+      clearInterval(focusInterval);
+      focusInterval = null;
+      btn.textContent = '▶ 開始';
+      alert('專注時段完成！休息一下 🌿');
+      return;
+    }
+    focusSeconds--;
+    updateFocusDisplay();
+  }, 1000);
+}
+
+function resetFocus() {
+  clearInterval(focusInterval);
+  focusInterval = null;
+  document.getElementById('focusStartBtn').textContent = '▶ 開始';
+  applyEnergy();
+}
+
+/* =========================================================
+   COMMUNITY — AI matching based on profile
+   ========================================================= */
+const allUsers = [
+  { name: '小明', identity: '中學生', goals: ['DSE','IELTS'], chronotype: 'early' },
+  { name: '阿欣', identity: '專業考試考生', goals: ['CPA','DSE'], chronotype: 'late' },
+  { name: 'Kelvin', identity: '在職進修', goals: ['IT認證','IELTS'], chronotype: 'neutral' },
+  { name: 'Jessica', identity: '專業考試考生', goals: ['PCLL','IELTS'], chronotype: 'early' },
+  { name: '嘉俊', identity: '中學生', goals: ['DSE','IT認證'], chronotype: 'late' },
+  { name: 'Wing', identity: '專業考試考生', goals: ['CPA','PCLL'], chronotype: 'neutral' }
+];
+
+function computeMatch(user) {
+  let score = 0;
+  // Goals overlap (most important)
+  const sharedGoals = user.goals.filter(g => profile.goals.includes(g));
+  score += sharedGoals.length * 30;
+
+  // Identity match
+  if (user.identity === profile.identity) score += 20;
+
+  // Chronotype match
+  if (user.chronotype === profile.chronotype) score += 10;
+
+  return Math.min(score, 99);
+}
+
+function renderFriendRecs() {
+  const area = document.getElementById('friendRecArea');
+  document.getElementById('communityProfileLabel').textContent = profile.goals.join('、') || '未設定';
+
+  const matches = allUsers
+    .map(u => ({ ...u, match: computeMatch(u) }))
+    .sort((a, b) => b.match - a.match)
+    .slice(0, 4);
+
+  if (matches.length === 0) {
+    area.innerHTML = '<p style="font-size:12px;color:#a0aec0;margin-top:8px;">暫無推薦好友。</p>';
+    return;
+  }
+
+  area.innerHTML = matches.map(u => {
+    const sharedGoals = u.goals.filter(g => profile.goals.includes(g)).join(' · ');
+    return `
+      <div class="friend-rec">
+        <div class="avatar">${u.name[0]}</div>
+        <div class="info">
+          <div class="name">${u.name} <span style="font-size:11px;color:#a0aec0;">· ${u.identity}</span></div>
+          <div class="subjects">共同目標：${sharedGoals || '—'}</div>
+        </div>
+        <div class="match">${u.match}% 匹配</div>
+        <button class="add-btn" onclick="alert('已向 ${u.name} 發出好友邀請！')">+ 加好友</button>
+      </div>
+    `;
+  }).join('');
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+document.getElementById('mainApp').style.display = 'none';
+document.getElementById('profileSetupPage').style.display = 'block';
+
+// Refresh energy suggestion every minute
+setInterval(() => {
+  if (document.getElementById('mainApp').style.display !== 'none') {
+    updateEnergySuggestion();
+    updateTodaySuggestion();
+  }
+}, 60000);
+</script>
+</body>
+</html>
